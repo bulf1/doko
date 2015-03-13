@@ -2,39 +2,36 @@ define([
     "knockout"
 ], function(ko) {
 
-    console.log("bindingHandlers", ko.bindingHandlers);
-    console.log("bindingHandlers.dijit", ko.bindingHandlers.dijit);
-
     // set up a binding between a widget's property and an observable.
     function setup_subscription(widget, prop, obs) {
         var subHdl, watchHdl;
 
-        console.log("setup subscription observable "+String(obs)+" -> widget "+String(widget)
+        console.log("setup subscription observable -> widget "+String(widget)
                     +" for parameter "+prop);
         subHdl = obs.subscribe(function(v) {
-            console.log("observable "+String(obs)+" -> widget "+String(widget)
+            console.log("observable -> widget "+String(widget)
                         +" update:", prop, v);
             widget.set(prop, v);
         });
         if(ko.isWritableObservable(obs)) {
-            console.log("setup subscription widget "+String(widget)+" -> observable "+String(obs)
+            console.log("setup subscription widget "+String(widget)+" -> observable"
                         +" for parameter "+prop);
             watchHdl = widget.watch(prop, function(name, oldV, newV) {
-                console.log("widget "+String(widget)+" -> observable "+String(obs)
-                            +" update:", prop, newV);
+                console.log("widget "+String(widget)+" -> observable update:",
+                            prop, newV);
                 obs(newV);
             });
         }
         return {
             observable: obs,
             dispose: function() {
-                console.log("remove subscription observable "+String(obs)
+                console.log("remove subscription observable"
                             +" -> widget "+String(widget)
                             +" for parameter "+prop);
                 subHdl.dispose();
                 if(watchHdl) {
                     console.log("remove subscription widget "+String(widget)
-                                +" -> observable "+String(obs)
+                                +" -> observable"
                                 +" for parameter "+prop);
                     watchHdl.unwatch();
                 }
@@ -44,13 +41,7 @@ define([
 
     ko.bindingHandlers.dijit = {
         init: function(elt, valueAccessor, allBindings) {
-            console.log("dijit binding init");
-            console.log("elt", elt);
-            console.log("valueAccessor", valueAccessor, valueAccessor());
             var klassName = valueAccessor();
-            if(typeof klassName != "string")
-                throw new Error("the argument to dijit must be a simple string");
-            var klass = require(klassName);
             var params = ko.unwrap(allBindings.get("dijitParams")) || {};
             var initParams = {};
             for(var k in params) {
@@ -58,7 +49,12 @@ define([
                     initParams[k] = ko.unwrap(params[k]);
                 }
             }
-            console.log("initParams", initParams);
+            console.log("dijit binding init class=", klassName,
+                        "elt=", elt,
+                        "initParams=", initParams);
+            if(typeof klassName != "string")
+                throw new Error("the argument to dijit must be a simple string");
+            var klass = require(klassName);
             var w = new klass(initParams, elt);
             w.startup();
             var subs = {};
