@@ -40,7 +40,7 @@ define([
     }
 
     ko.bindingHandlers.dijit = {
-        init: function(elt, valueAccessor, allBindings) {
+        init: function(elt, valueAccessor, allBindings, viewModel, bindingContext) {
             var klassName = valueAccessor();
             var params = ko.unwrap(allBindings.get("dijitParams")) || {};
             var initParams = {};
@@ -56,7 +56,6 @@ define([
                 throw new Error("the argument to dijit must be a simple string");
             var klass = require(klassName);
             var w = new klass(initParams, elt);
-            w.startup();
             var subs = {};
 
             // we use ko.computed instead of an update handler (which is implemented
@@ -103,6 +102,14 @@ define([
                 w.destroyRecursive(); // FIXME: preserve DOM?
                 console.log("ko-dispose: done");
             });
+
+            if(w.containerNode) {
+                console.log("applying bindings to descendants of containerNode",
+                            w.containerNode);
+                ko.applyBindingsToDescendants(bindingContext, w.containerNode);
+            }
+            console.log("calling startup of", w);
+            w.startup();
 
             // as the widget might have replaced the original dom node
             // we don't let knockout process descendant bindings
